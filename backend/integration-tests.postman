@@ -1,0 +1,121 @@
+1. Successful Charge:
+This test checks if a charge operation with sufficient balance is successful.
+
+pm.test('Successful Charge', function () {
+    pm.sendRequest({
+        url: pm.environment.baseUrl + '/charge',
+        method: 'POST',
+        header: 'Content-Type:application/json',
+        body: {
+            mode: 'raw',
+            raw: JSON.stringify({ account: 'testAccount', charges: 10 }) // Adjust data as needed
+        }
+    }, function (err, res) {
+        pm.response.to.have.status(200);
+        pm.expect(res.json().isAuthorized).to.equal(true);
+        pm.expect(res.json().remainingBalance).to.equal(90); // Balance should be reduced
+    });
+});
+
+2. Insufficient Balance:
+This test checks if a charge operation with insufficient balance is denied.
+
+pm.test('Insufficient Balance', function () {
+    pm.sendRequest({
+        url: pm.environment.baseUrl + '/charge',
+        method: 'POST',
+        header: 'Content-Type:application/json',
+        body: {
+            mode: 'raw',
+            raw: JSON.stringify({ account: 'testAccount', charges: 110 }) // Adjust data as needed
+        }
+    }, function (err, res) {
+        pm.response.to.have.status(200);
+        pm.expect(res.json().isAuthorized).to.equal(false);
+        pm.expect(res.json().remainingBalance).to.equal(90); // Balance should remain unchanged
+    });
+});
+
+3. Insufficient Balance:
+This test checks if a charge operation with insufficient balance is denied.
+
+pm.test('Negative Charges', function () {
+    pm.sendRequest({
+        url: pm.environment.baseUrl + '/charge',
+        method: 'POST',
+        header: 'Content-Type:application/json',
+        body: {
+            mode: 'raw',
+            raw: JSON.stringify({ account: 'testAccount', charges: -10 }) // Negative charges
+        }
+    }, function (err, res) {
+        pm.response.to.have.status(200);
+        pm.expect(res.json().isAuthorized).to.equal(false);
+        pm.expect(res.json().remainingBalance).to.equal(100); // Balance should remain unchanged
+    });
+});
+
+
+4. Successful Reset:
+This test checks if a reset operation is successful.
+
+pm.test('Successful Reset', function () {
+    pm.sendRequest({
+        url: pm.environment.baseUrl + '/reset',
+        method: 'POST',
+        header: 'Content-Type:application/json',
+        body: {
+            mode: 'raw',
+            raw: JSON.stringify({ account: 'testAccount' }) // Adjust data as needed
+        }
+    }, function (err, res) {
+        pm.response.to.have.status(204);
+        // Verify if the balance is now the default balance (e.g., 100)
+        pm.sendRequest({
+            url: pm.environment.baseUrl + '/charge',
+            method: 'POST',
+            header: 'Content-Type:application/json',
+            body: {
+                mode: 'raw',
+                raw: JSON.stringify({ account: 'testAccount', charges: 10 }) // Attempt to charge
+            }
+        }, function (err, res) {
+            pm.response.to.have.status(200);
+            pm.expect(res.json().isAuthorized).to.equal(true);
+            pm.expect(res.json().remainingBalance).to.equal(90); // Balance should be reduced
+        });
+    });
+});
+
+
+5. Reset with Custom Account:
+This test checks if resetting a custom account is successful.
+
+pm.test('Reset with Custom Account', function () {
+    pm.sendRequest({
+        url: pm.environment.baseUrl + '/reset',
+        method: 'POST',
+        header: 'Content-Type:application/json',
+        body: {
+            mode: 'raw',
+            raw: JSON.stringify({ account: 'customAccount' }) // Reset a custom account
+        }
+    }, function (err, res) {
+        pm.response.to.have.status(204);
+        // Verify if the custom account balance is now the default balance (e.g., 100)
+        pm.sendRequest({
+            url: pm.environment.baseUrl + '/charge',
+            method: 'POST',
+            header: 'Content-Type:application/json',
+            body: {
+                mode: 'raw',
+                raw: JSON.stringify({ account: 'customAccount', charges: 10 }) // Attempt to charge
+            }
+        }, function (err, res) {
+            pm.response.to.have.status(200);
+            pm.expect(res.json().isAuthorized).to.equal(true);
+            pm.expect(res.json().remainingBalance).to.equal(90); // Balance should be reduced
+        });
+    });
+});
+
